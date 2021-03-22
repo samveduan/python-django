@@ -1,0 +1,403 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+{% load staticfiles %}
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" href="{% static 'libs/bootstrap/css/bootstrap.min.css' %}">
+<link rel="stylesheet" href="{% static 'libs/toastr/css/toastr.css' %}">
+<link rel="stylesheet" href="{% static 'libs/bootstrap-table-master/bootstrap-table.css' %}">
+<link rel="stylesheet" href="{% static 'libs/bootstrap-validator/css/bootstrapValidator.css' %}">
+<script src="{% static 'libs/jquery/jquery-1.11.2.min.js' %}"></script>
+<script src="{% static 'libs/bootstrap/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'libs/toastr/js/toastr.min.js' %}"></script>
+<script src="{% static 'libs/bootstrap-table-master/bootstrap-table.js' %}"></script>
+<script src="{% static 'libs/bootstrap-table-master/locale/bootstrap-table-zh-CN.js' %}"></script>
+<script src="{% static 'libs/bootstrap-validator/js/bootstrapValidator.js' %}"></script>
+<script src="{% static 'libs/axios/axios.min.js' %}"></script>
+<title>Django后台管理系统</title>
+<style>
+#header {
+    width: auto;
+    height: 60px;
+    line-height: 60px;
+    padding: 10px 40px;
+    background: #417690;
+    line-height: 40px;
+    color: #ffc;
+    overflow: hidden;
+}
+#site-name{
+	color: #f5dd5d;
+	font-size: 20px;
+}
+div.breadcrumbs {
+    background: #79aec8;
+    padding: 10px 40px;
+    border: none;
+    font-size: 14px;
+    color: #c4dce8;
+    text-align: left;
+}
+div.breadcrumbs a{
+	color: #ffffff;
+	text-decoration: none;
+}
+</style>
+</head>
+
+<body>
+<div id="header">
+	<div id="site-name">Django 管理</div>
+</div>
+
+<div class="breadcrumbs">
+<a href="/admin/">首页</a>
+› <a href="/admin/article/">Article</a>
+</div>
+
+<div style="padding: 20px;">
+	<div style="text-align: right;">
+		<a class="btn btn-default" id="add-button">
+			<i class="glyphicon glyphicon-plus"></i>
+			<span>添加</span>
+		</a> 
+		<a class="btn btn-default" id="delete-button">
+			<i class="glyphicon glyphicon-minus"></i>
+			<span>删除</span>
+		</a>
+	</div>
+	<table id="articles-table" data-toggle="table" class="table table-bordered table-striped"></table>
+</div>
+
+<!-- 添加文章 -->
+<div class="modal fade" tabindex="-1" role="dialog" id="add-modal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+    <form id="add-modal-form" method="post" class="form-horizontal" action="">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">添加</h4>
+      </div>
+      <div class="modal-body">
+      		<!-- // modal-body begin -->
+            	<div class="form-group">
+                    <label class="col-lg-3 col-md-3 col-sm-3 control-label font-normal align-right">标题：</label>
+                    <div class="col-lg-7 col-md-7 col-sm-7">
+                        <input type="text" class="form-control" id="add-modal-title" name="addModalTitle" value="" maxlength="64"/>
+                    </div>
+               	</div>
+               	
+               	<div class="form-group">
+                    <label class="col-lg-3 col-md-3 col-sm-3 control-label font-normal align-right">内容：</label>
+                    <div class="col-lg-7 col-md-7 col-sm-7">
+                        <textarea class="form-control" id="add-modal-content" name="addModalContent" style="height: 200px; padding: 5px;" maxlength="256"></textarea>
+                    </div>
+               	</div>
+      		<!-- modal-body end // -->
+      </div>
+      <div class="modal-footer">
+      	<button type="submit" class="btn btn-primary">保存</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+      </div>
+      </form>	
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- 编辑文章 -->
+<div class="modal fade" tabindex="-1" role="dialog" id="edit-modal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+    <form id="edit-modal-form" method="post" class="form-horizontal" action="">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">编辑</h4>
+      </div>
+      <div class="modal-body">
+      					<input type="hidden" id="edit-modal-id"/>
+      		<!-- // modal-body begin -->
+            	<div class="form-group">
+                    <label class="col-lg-3 col-md-3 col-sm-3 control-label font-normal align-right">标题：</label>
+                    <div class="col-lg-7 col-md-7 col-sm-7">
+                        <input type="text" class="form-control" id="edit-modal-title" name="editModalTitle" value="" maxlength="64"/>
+                    </div>
+               	</div>
+               	
+               	<div class="form-group">
+                    <label class="col-lg-3 col-md-3 col-sm-3 control-label font-normal align-right">内容：</label>
+                    <div class="col-lg-7 col-md-7 col-sm-7">
+                        <textarea class="form-control" id="edit-modal-content" name="editjModalContent" style="height: 200px; padding: 5px;" maxlength="256"></textarea>
+                    </div>
+               	</div>
+      		<!-- modal-body end // -->
+      </div>
+      <div class="modal-footer">
+      	<button type="submit" class="btn btn-primary">保存</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+      </div>
+      </form>	
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<script>
+var $articlesTable = $('#articles-table').bootstrapTable('destroy').bootstrapTable({
+	url: '/article/all/',
+    method: 'GET',
+	dataType: "json",
+    uniqueId: 'id',
+    striped: false,
+    cache: false,
+	sortName: 'id',
+    sortable: false,
+    sortOrder: 'desc',
+    sidePagination: "server",
+    undefinedText: '--',
+    singleSelect: false,
+    toolbar: '#soft-toolbar',
+    search: false,
+    strictSearch: true,
+    clickToSelect: true,
+    pagination: true,
+    pageNumber: 1,
+    pageSize: 5,
+    pageList: [5, 10, 20, 50, 100],
+    paginationPreText: "上一页",
+    paginationNextText: "下一页",
+	queryParamsType: "",
+    queryParams : function (params) {
+		var temp = {
+			'pageSize' : params.pageSize,
+			'pageNumber' : params.pageNumber,
+			'searchText': params.searchText,
+			'sortName': params.sortName,
+			'sortOrder': params.sortOrder
+		};
+		return temp;
+    },
+    columns: [
+		{
+			checkbox: true
+		},{
+			field: 'title',
+			title:'标题',
+			width: '80%',
+			formatter: function(value, row, index){
+				return '<a target="_blank" href="/article/article/' + row.id + '">' + value + '</a>';
+			}
+		},{
+			field: 'create_time',
+			title:'创建时间',
+			width: '10%'
+		},{
+			title:'编辑',
+			formatter: function(value, row, index){
+				console.log(row);
+				return '<a class="btn btn-default btn-xs" onclick="editArticle(' + row.id + ')"><i class="glyphicon glyphicon-pencil"></i><span> 编辑</span></a>'	;
+			}
+		}
+    ],
+    onLoadError: function () {
+        toastr.error("数据加载失败！", "错误提示");
+    },
+    onClickRow: function (row, $element) {
+        //	EditViewById(id, 'view');
+    }
+});
+
+function editArticle(id){
+	$("#edit-modal").modal({
+		'show': true,
+		'backdrop': 'static'
+	})
+	
+	$.ajax({
+		type: "POST",
+		url: '/article/get_a_article/',
+		data: {id: id},
+		dataType: "json",
+		success: function(data){
+			if(data.ret){
+				$("#edit-modal-title").val(data.title);
+				$("#edit-modal-content").val(data.content);
+				$("#edit-modal-id").val(data.id);
+			}
+		},
+		error: function(data){
+			console.log(data);
+		}
+	});
+}
+
+$("#add-button").click( function(){
+	$("#add-modal").modal({
+		'show': true,
+		'backdrop': 'static' 
+	})
+})
+
+$('#add-modal-form').bootstrapValidator({
+    message: 'This value is not valid',
+    feedbackIcons: {
+        valid: 'glyphicon glyphicon-ok',
+        invalid: 'glyphicon glyphicon-remove',
+        validating: 'glyphicon glyphicon-refresh'
+    },
+    fields: {
+    	addModalTitle: {
+            message: '标题无效',
+            validators: {
+                notEmpty: {
+                    message: '标题不能为空'
+                }
+            }
+        },
+        addModalContent: {
+            message: '内容无效',
+            validators: {
+                notEmpty: {
+                    message: '内容不能为空'
+                }
+            }
+        }
+    }
+}).on('success.form.bv', function(e) {
+	e.preventDefault();
+	
+	$.ajax({
+		type: "POST",
+		url: '/article/add/',
+		data: {title: $("#add-modal-title").val(), content: $("#add-modal-content").val()},
+		dataType: "json",
+		success: function(data){
+			if(data.ret){
+				toastr.success('添加成功！', '成功提示');
+				$("#add-modal").modal('hide');
+				$articlesTable.bootstrapTable('refresh');
+			}
+		},
+		error: function(data){
+			console.log(data);
+		}
+	});
+
+});
+
+$("#add-modal").on('hide.bs.modal', function(){
+	$("#add-modal-form")[0].reset();
+	$("#add-modal-form").data('bootstrapValidator').resetForm();
+})
+
+$('#edit-modal-form').bootstrapValidator({
+    message: 'This value is not valid',
+    feedbackIcons: {
+        valid: 'glyphicon glyphicon-ok',
+        invalid: 'glyphicon glyphicon-remove',
+        validating: 'glyphicon glyphicon-refresh'
+    },
+    fields: {
+    	editModalTitle: {
+            message: '标题无效',
+            validators: {
+                notEmpty: {
+                    message: '标题不能为空'
+                }
+            }
+        },
+        editjModalContent: {
+            message: '内容无效',
+            validators: {
+                notEmpty: {
+                    message: '内容不能为空'
+                }
+            }
+        }
+    }
+}).on('success.form.bv', function(e) {
+	e.preventDefault();
+	
+	$.ajax({
+		type: "POST",
+		url: '/article/edit/',
+		data: {id: $("#edit-modal-id").val(), title: $("#edit-modal-title").val(), content: $("#edit-modal-content").val()},
+		dataType: "json",
+		success: function(data){
+			if(data.ret){
+				toastr.success(data.msg, '成功提示');
+				$("#edit-modal").modal('hide');
+				$articlesTable.bootstrapTable('refresh');
+			}
+		},
+		error: function(data){
+			console.log(data);
+		}
+	});
+
+});
+
+$("#edit-modal").on('hide.bs.modal', function(){
+	$("#edit-modal-form")[0].reset();
+	$("#edit-modal-form").data('bootstrapValidator').resetForm();
+})
+
+$("#delete-button").click(function(){
+	let selectedData = $articlesTable.bootstrapTable('getSelections');
+	let len = selectedData.length;
+	
+	if(len == 0){
+		toastr.error('请选择要删除的数据！', '错误提示');
+		return;
+	}
+	
+	let selectedIdArr = [];
+	for(var i = 0; i<len; i++){
+		selectedIdArr.push(selectedData[i].id);
+	}
+	
+	$.ajax({
+		type: "POST",
+		url: '/article/delete/',
+		traditional:true,  //加上此项可以传数组
+		data: {ids: selectedIdArr},
+		dataType: "json",
+		success: function(data){
+			if(data.ret){
+				toastr.success('删除成功！', '成功提示');
+				$articlesTable.bootstrapTable('refresh');
+			}else{
+				toastr.error(data.errMsg, '错误提示');
+			}
+		},
+		error: function(data){
+			console.log(data);
+		}
+	});
+})
+
+$(function(){
+	axios.post('/article/download/', {}, {
+		  responseType: 'blob'
+	})
+	.then((res) => {
+		  console.log('res', res);
+		  const blob = Blob([res.data]);
+		  const reader = new FileReader();
+		  reader.readAsDataURL(blob);
+		  reader.onload = (e) => {
+		    const a = document.createElement('a');
+		    a.download = `csv.csv`;
+		    // 后端设置的文件名称在res.headers的 "content-disposition": "form-data; name=\"attachment\"; filename=\"20181211191944.zip\"",
+		    a.href = e.target.result;
+		    console.log(e.target.result);
+		    document.body.appendChild(a);
+		    a.click();
+		    document.body.removeChild(a);
+		  };
+	})
+	.catch((err) => {
+		  console.log(err.message);
+	});
+}) 
+</script>
+</body>
+</html>
